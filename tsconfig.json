@@ -1,0 +1,14 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "module": "commonjs",
+        "removeComments": true,
+        "outDir": "./gen",
+        "sourceMap": true,
+        "watch": true
+    },
+    "exclude": [
+        "node_modules",
+        "gen"
+    ]
+}
