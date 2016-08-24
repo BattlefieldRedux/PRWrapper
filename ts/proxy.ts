@@ -5,15 +5,32 @@ import {Server, Message, Flags, Player} from "./Model"
 import "./Utils"
 
 let MOCKED_PLAYERS = {
-    "player_": ["Player1", "Player2"],
-    "score_": ["124", "200"],
-    "ping_": ["99", "99"],
-    "team_": ["1", "2"],
-    "deaths_": ["0", "0"],
-    "skill_": ["1", "2"],
-    "pid_": ["1", "2"],
-    "AIBot_": ["0", "0"],
-} ;
+    "player_": [],
+    "score_": [],
+    "ping_": [],
+    "team_": [],
+    "deaths_": [],
+    "pid_": [],
+    "skill_": [],
+    "AIBot_": [],
+};
+
+let PLAYERS = 100;
+
+(function () {
+    for (let k = 0; k < PLAYERS; k++) {
+        MOCKED_PLAYERS["player_"].push(" Player_" + k);
+        MOCKED_PLAYERS["score_"].push(k.toString());
+        MOCKED_PLAYERS["ping_"].push("100");
+        MOCKED_PLAYERS["team_"].push((k < 50) ? "1" : "2");
+        MOCKED_PLAYERS["deaths_"].push("0");
+        MOCKED_PLAYERS["skill_"].push("0");
+        MOCKED_PLAYERS["pid_"].push((k.toString());
+        MOCKED_PLAYERS["AIBot_"].push("0");
+    }
+})();
+
+
 
 export class ProxyServer {
     private mPort: number;
@@ -48,7 +65,7 @@ export class ProxyServer {
 
     private onMessage(request, remote) {
         //console.log("onMessage");
-        console.log(request[0]+" "+request[1]+" "+request[2]+": "+request.compareTo(ProxyServer.QUERY_REQUEST, 0, 3));
+        console.log(request[0] + " " + request[1] + " " + request[2] + ": " + request.compareTo(ProxyServer.QUERY_REQUEST, 0, 3));
 
         if (request.compareTo(ProxyServer.QUERY_REQUEST, 0, 3)) {
             //console.log("Responding...");
@@ -67,15 +84,19 @@ export class ProxyServer {
                 console.log("nMessages: " + nMessages);
                 console.log("tMessages: " + tMessages);
                 if (nMessages - 1 == tMessages) {
-                    var challenge = request.toString('hex').substring(6, 14);
+                    let challenge:Buffer=  Buffer.alloc(5);
+                    request.copy(challenge, 0, 3, 7);
+
                     server.headers.hostname = "Derp";
+                    server.headers.numplayers = PLAYERS.toString();
+                    server.headers.maxplayers = "100";
                     server.players = MOCKED_PLAYERS;
+
                     let encoder: Encoder = new Encoder(challenge, server);
                     let messages = encoder.encode(Flags.HEADERS + Flags.PLAYERS + Flags.TEAM);
 
                     for (let k in messages) {
-                        console.log("Replying...");
-                        let buffer: Buffer = Buffer.from(messages[k].raw());
+                        let buffer: Buffer = Buffer.from(messages[k].raw().slice(0, messages[k].position() + 1 ));
                         this.sendTo(buffer, remote);
                     }
                 }

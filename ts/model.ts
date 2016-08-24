@@ -82,9 +82,14 @@ export class Message {
     }
 
 
-    public setPosition(pos: number): Message {
-        this.mPos = pos;
-        return this;
+    public position(pos: number): any {
+        if(pos!==undefined){
+            this.mPos = pos;
+            return this;
+        }else{
+            return this.mPos;
+        }
+       
     }
 
     public raw(): Uint8Array {

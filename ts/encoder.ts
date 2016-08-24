@@ -35,7 +35,7 @@ export class Encoder {
     private newMessage() {
         if (this.mMessage !== undefined && this.mMessage != null) {
             this.mMessage
-                .setPosition(Message.MESSAGE_SIZE - 1)
+                .position(Message.MESSAGE_SIZE - 1)
                 .put(0);
         }
         this.mMessage = new Message(Message.MESSAGE_SIZE);
@@ -118,7 +118,7 @@ export class Encoder {
     private initMessage() {
         // Confirm position is at zero
         this.mMessage
-            .setPosition(0)
+            .position(0)
             .put(0);
 
         // TimeStamp Reply
