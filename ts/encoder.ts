@@ -49,8 +49,7 @@ export class Encoder {
             if (this.mMessage.remaining() == 0) {
                 this.newMessage();
                 this.mMessage
-                    .put(Message.TYPE_HEADERS)
-                    .put(0)
+                    .put(Message.TYPE_HEADERS);
             }
 
             this.mMessage
