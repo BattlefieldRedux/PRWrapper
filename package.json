@@ -1,0 +1,34 @@
+{
+  "name": "prwrapper",
+  "version": "0.0.1",
+  "description": "An UDP proxy wrapper for battlefield2",
+  "main": "gen/app.js",
+  "dependencies": {
+    "ip": "^1.1.3"
+  },
+  "devDependencies": {
+    "rimraf": "^2.5.4",
+    "typings": "^1.3.2"
+  },
+  "scripts": {
+    "postinstall": "typings install",
+    "clean": "rimraf gen",
+    "build": "npm run clean && tsc",
+    "start": "npm run build && node gen/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://Vascko@github.com/UTurista/PRWrapper.git"
+  },
+  "keywords": [
+    "battlefield2",
+    "udp",
+    "wrapper"
+  ],
+  "author": "UTurista",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/UTurista/PRWrapper/issues"
+  },
+  "homepage": "https://github.com/UTurista/PRWrapper#readme"
+}

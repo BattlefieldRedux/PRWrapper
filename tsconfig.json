@@ -4,8 +4,7 @@
         "module": "commonjs",
         "removeComments": true,
         "outDir": "./gen",
-        "sourceMap": true,
-        "watch": true
+        "sourceMap": true
     },
     "exclude": [
         "node_modules",

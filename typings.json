@@ -1,0 +1,6 @@
+{
+  "globalDependencies": {
+    "ip": "registry:dt/ip#0.0.0+20160316155526",
+    "node": "registry:dt/node#6.0.0+20160823142437"
+  }
+}

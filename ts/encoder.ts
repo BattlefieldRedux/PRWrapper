@@ -71,7 +71,7 @@ export class Encoder {
         this.mMessage.put(0);
     }
 
-    private encodeArray(array: Object[], field: string, type: number) {
+    private encodeArray(array: Object, field: string, type: number) {
         this.mMessage
             .putString(field)
             .put(0)

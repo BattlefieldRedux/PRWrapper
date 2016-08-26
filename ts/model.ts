@@ -18,9 +18,13 @@ export class Player {
 }
 
 export class Server {
-    headers: Object;
+    headers: {
+        hostname?:string,
+        numplayers?:string,
+        maxplayers?:string
+    };
     players: Object;
-    team: Object[];
+    team: Object;
     timestamp: Uint8Array;
 }
 
@@ -82,7 +86,7 @@ export class Message {
     }
 
 
-    public position(pos: number): any {
+    public position(pos: number=undefined): any {
         if(pos!==undefined){
             this.mPos = pos;
             return this;

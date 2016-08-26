@@ -2,6 +2,7 @@ import {createSocket, Socket} from "dgram"
 import {Encoder} from "./Encoder"
 import {Decoder} from "./Decoder"
 import {Server, Message, Flags, Player} from "./Model"
+import ip = require("ip");
 import "./Utils"
 
 let MOCKED_PLAYERS = {
@@ -25,7 +26,7 @@ let PLAYERS = 100;
         MOCKED_PLAYERS["team_"].push((k < 50) ? "1" : "2");
         MOCKED_PLAYERS["deaths_"].push("0");
         MOCKED_PLAYERS["skill_"].push("0");
-        MOCKED_PLAYERS["pid_"].push((k.toString());
+        MOCKED_PLAYERS["pid_"].push(k.toString());
         MOCKED_PLAYERS["AIBot_"].push("0");
     }
 })();
@@ -35,28 +36,29 @@ let PLAYERS = 100;
 export class ProxyServer {
     private mPort: number;
     private mServer: Socket;
+    private mIP: string = ip.address();
 
     static CHALLENGE_REQUEST = Buffer.from([0xfe, 0xfd, 0x09]);
     static QUERY_REQUEST = Buffer.from([0xfe, 0xfd, 0x00]);
     static LOOPBACK_IP: string = "127.0.0.1";
-    static PUBLIC_IP: string = "192.168.1.186";
 
 
-    constructor(port: number) {
+    constructor(port: number, networkIP: string = undefined) {
         this.mPort = port;
+        this.mIP = networkIP === undefined ? ip.address() : networkIP;
     }
 
     public start() {
         if (this.mServer === undefined) {
             this.mServer = createSocket('udp4');
-            let self = this;
+          
             this.mServer.on('message', function (message, remote) {
-                self.onMessage(message, remote);
-            });
+                this.onMessage(message, remote);
+            }.bind(this));
 
             // server listening 0.0.0.0:41234
-            this.mServer.bind(this.mPort, ProxyServer.PUBLIC_IP);
-            console.log(`Server is now listening on ${ProxyServer.PUBLIC_IP}:${this.mPort}...`);
+            this.mServer.bind(this.mPort, this.mIP);
+            console.log(`Server is now listening on ${this.mIP}:${this.mPort}...`);
         } else {
             console.error("Server is already running.");
         }
@@ -84,7 +86,7 @@ export class ProxyServer {
                 console.log("nMessages: " + nMessages);
                 console.log("tMessages: " + tMessages);
                 if (nMessages - 1 == tMessages) {
-                    let challenge:Buffer=  Buffer.alloc(5);
+                    let challenge: Buffer = Buffer.alloc(5);
                     request.copy(challenge, 0, 3, 7);
 
                     server.headers.hostname = "Derp";
@@ -96,7 +98,7 @@ export class ProxyServer {
                     let messages = encoder.encode(Flags.HEADERS + Flags.PLAYERS + Flags.TEAM);
 
                     for (let k in messages) {
-                        let buffer: Buffer = Buffer.from(messages[k].raw().slice(0, messages[k].position() + 1 ));
+                        let buffer: Buffer = Buffer.from(messages[k].raw().slice(0, messages[k].position() + 1));
                         this.sendTo(buffer, remote);
                     }
                 }

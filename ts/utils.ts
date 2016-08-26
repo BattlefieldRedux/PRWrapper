@@ -10,7 +10,7 @@ export class Util {
 }
 
 (function () {
-    Buffer.prototype.compareTo = function (buffer: Buffer, start: number, length: number) {
+    Buffer.prototype['compareTo'] = function (buffer: Buffer, start: number, length: number) {
         for (let k = start; k < start + length; k++) {
             if (this[k] != buffer[k])
                 return false;
