@@ -3,13 +3,14 @@ import {Message, Server, Flags} from "./Model";
 
 export class Decoder {
 
-    public static decode(rawMessage: Uint8Array, server: Server) {
+    public static decode(rawMessage: Uint8Array, server: Server, noHeader: boolean = false) {
         let message = new Message(rawMessage);
 
         if (server === undefined)
             server = new Server();
 
-        Decoder.parseMessageHeader(message, server);
+        if (!noHeader)
+            Decoder.parseMessageHeader(message, server);
 
         let type: number;
         while (message.remaining() > 0) {

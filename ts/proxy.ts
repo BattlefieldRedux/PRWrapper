@@ -5,125 +5,136 @@ import {Server, Message, Flags, Player} from "./Model"
 import ip = require("ip");
 import "./Utils"
 
-let MOCKED_PLAYERS = {
-    "player_": [],
-    "score_": [],
-    "ping_": [],
-    "team_": [],
-    "deaths_": [],
-    "pid_": [],
-    "skill_": [],
-    "AIBot_": [],
-};
-
-let PLAYERS = 100;
-
-(function () {
-    for (let k = 0; k < PLAYERS; k++) {
-        MOCKED_PLAYERS["player_"].push(" Player_" + k);
-        MOCKED_PLAYERS["score_"].push(k.toString());
-        MOCKED_PLAYERS["ping_"].push("100");
-        MOCKED_PLAYERS["team_"].push((k < 50) ? "1" : "2");
-        MOCKED_PLAYERS["deaths_"].push("0");
-        MOCKED_PLAYERS["skill_"].push("0");
-        MOCKED_PLAYERS["pid_"].push(k.toString());
-        MOCKED_PLAYERS["AIBot_"].push("0");
-    }
-})();
-
-
-
 export class ProxyServer {
-    private mPort: number;
-    private mServer: Socket;
-    private mIP: string = ip.address();
-
     static CHALLENGE_REQUEST = Buffer.from([0xfe, 0xfd, 0x09]);
+    static QUERY_COMPLETE_REQUEST = Buffer.from([0xfe, 0xfd, 0x00, 0x22, 0x22, 0x22, 0x22, 0xff, 0xff, 0xff, 0x01]);
     static QUERY_REQUEST = Buffer.from([0xfe, 0xfd, 0x00]);
+
     static LOOPBACK_IP: string = "127.0.0.1";
 
+    // Socket that listens for client requests
+    private mClientSocket: Socket;
+    // Socket that listens for gameServer requests
+    private mServerSocket: Socket;
 
-    constructor(port: number, networkIP: string = undefined) {
-        this.mPort = port;
+    private mPort: number;
+    private mReportingPort: number;
+    private mIP: string;
+
+    // This is where we'll store the real (==complete) player list
+    private mServerInfo: Server;
+
+    constructor(clientPort: number, serverPort: number, networkIP: string = undefined) {
+        this.mServerInfo = new Server();
+        this.mPort = clientPort;
+        this.mReportingPort = serverPort;
         this.mIP = networkIP === undefined ? ip.address() : networkIP;
     }
 
     public start() {
-        if (this.mServer === undefined) {
-            this.mServer = createSocket('udp4');
-          
-            this.mServer.on('message', function (message, remote) {
-                this.onMessage(message, remote);
+        // Start gameServer socket
+        if (this.mServerSocket === undefined) {
+            this.mServerSocket = createSocket('udp4');
+
+            this.mServerSocket.on('message', function (message, remote) {
+                this.onGameReporting(message, remote);
             }.bind(this));
 
-            // server listening 0.0.0.0:41234
-            this.mServer.bind(this.mPort, this.mIP);
-            console.log(`Server is now listening on ${this.mIP}:${this.mPort}...`);
+
+            this.mServerSocket.bind(this.mReportingPort, '127.0.0.1');
+
+            console.log(`Server is now listening game server on 127.0.0.1':${this.mReportingPort}...`);
         } else {
             console.error("Server is already running.");
         }
+
+        // Start client socket
+        if (this.mClientSocket === undefined) {
+            this.mClientSocket = createSocket('udp4');
+
+            this.mClientSocket.on('message', function (message, remote) {
+                this.onMessage(message, remote);
+            }.bind(this));
+
+            this.mClientSocket.bind(this.mPort, this.mIP);
+
+            console.log(`Server is now listening clients on ${this.mIP}:${this.mPort}...`);
+        } else {
+            console.error("Server is already running.");
+        }
+
+
     }
 
 
+
+    private onGameReporting(message, remote) {
+        // Reset
+        this.mServerInfo = new Server();
+
+        // Update player list
+        Decoder.decode(message, this.mServerInfo, true);
+
+    }
+
     private onMessage(request, remote) {
-        //console.log("onMessage");
+
         console.log(request[0] + " " + request[1] + " " + request[2] + ": " + request.compareTo(ProxyServer.QUERY_REQUEST, 0, 3));
 
         if (request.compareTo(ProxyServer.QUERY_REQUEST, 0, 3)) {
-            //console.log("Responding...");
+            // Get client challenge 
+            let challenge: Buffer = Buffer.alloc(5);
+            request.copy(challenge, 0, 3, 7);
 
-            let server: Server = new Server();
             let nMessages = 0;
             let tMessages = -1;
-            this.relay(request, remote, (reply) => {
-                //console.log("Relay receiving a message...");
+            let serverInfo: Server = new Server();
+
+            // Relay request to server
+            this.relay(request, function (gameServerReply) {
+
                 nMessages++;
-                if (Decoder.isLastMessage(reply))
-                    tMessages = Decoder.getMessageNumber(reply);
+                if (Decoder.isLastMessage(gameServerReply))
+                    tMessages = Decoder.getMessageNumber(gameServerReply);
 
-                Decoder.decode(reply, server);
+                // update local information about server
+                Decoder.decode(gameServerReply, serverInfo);
 
-                console.log("nMessages: " + nMessages);
-                console.log("tMessages: " + tMessages);
+                // If local information is complete...
                 if (nMessages - 1 == tMessages) {
-                    let challenge: Buffer = Buffer.alloc(5);
-                    request.copy(challenge, 0, 3, 7);
+                    // ... replace the player information w/ the correct one
+                    serverInfo.players = this.mServerInfo.players;
 
-                    server.headers.hostname = "Derp";
-                    server.headers.numplayers = PLAYERS.toString();
-                    server.headers.maxplayers = "100";
-                    server.players = MOCKED_PLAYERS;
-
-                    let encoder: Encoder = new Encoder(challenge, server);
+                    // Encode message 
+                    let encoder: Encoder = new Encoder(challenge, serverInfo);
                     let messages = encoder.encode(Flags.HEADERS + Flags.PLAYERS + Flags.TEAM);
 
+                    // Send info to client
                     for (let k in messages) {
                         let buffer: Buffer = Buffer.from(messages[k].raw().slice(0, messages[k].position() + 1));
                         this.sendTo(buffer, remote);
                     }
                 }
-            });
+            }.bind(this));
         } else {
-            this.relay(request, remote);
+            // Relaying all other messages GameServer and returns directly to client 
+            this.relay(request, function (gMessage) {
+                this.sendTo(gMessage, remote);
+            }.bind(this));
         }
     }
 
-    private relay(message, remote, callback = undefined) {
-        //console.log("relay");
-
-
+    /**
+     * Sends the given message to GameServer
+     */
+    private relay(message, callback) {
         var relay = createSocket('udp4');
         let self = this;
-        if (callback === undefined) {
-            //console.log("Default relay call")
-            callback = function (gMessage) {
-                self.sendTo(gMessage, remote);
-            };
-        }
 
+        // Relay what the server replies
         relay.on('message', callback);
 
-        //console.log("Relay sending a message...");
+        // Send the given message to Server
         relay.send(message, 0, message.length, this.mPort, ProxyServer.LOOPBACK_IP, (err) => {
             if (err) {
                 console.error(err);
@@ -133,7 +144,6 @@ export class ProxyServer {
     }
 
     private sendTo(message: Buffer, target) {
-        //console.log("sendTo");
-        this.mServer.send(message, 0, message.length, target.port, target.address);
+        this.mClientSocket.send(message, 0, message.length, target.port, target.address);
     }
 }
