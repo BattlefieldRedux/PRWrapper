@@ -5,13 +5,26 @@ The information for the remaining 36 players gameservers is obtain throught a py
 
 
 ## Install
-The following command will install all required dependencies.
+- Install all dependencies with:
 ```
 npm install
 ```
+- Install python by moving ```realityspy.py``` to ```\mods\pr\python\game\``` and adding in the ```__init__.py```  the following code:
+```
+import playersfix
+playersfix.init()
+```
+
 
 ## Run
-And to keep it simple, the following command will clean, build and start the wrapper (server).
+- The following command will clean, build and start the wrapper (server).
+- Requires administrator/sudo permissions to override UDP port.
 ```
 npm start
 ```
+
+## Configuration
+- In ```realityspy.py``` you can change the port to which you'll report to the proxy
+- In ```app.ts``` you can change the gamespy's port and the port that will receive updates from the server
+
+
