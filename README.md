@@ -11,8 +11,8 @@ npm install
 ```
 - Install python by moving ```realityspy.py``` to ```\mods\pr\python\game\``` and adding in the ```__init__.py```  the following code:
 ```
-import playersfix
-playersfix.init()
+import realityspy
+realityspy.init()
 ```
 - In ```\mods\pr\settings\serversettings.con``` set the interface IP to 'loopback' ip, ie: 
 ```
