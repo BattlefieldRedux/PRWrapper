@@ -14,6 +14,10 @@ npm install
 import playersfix
 playersfix.init()
 ```
+- In ```\mods\pr\settings\serversettings.con``` set the interface IP to 'loopback' ip, ie: 
+```
+sv.interfaceIP "127.0.0.1"
+```
 
 
 ## Run
@@ -25,6 +29,9 @@ npm start
 
 ## Configuration
 - In ```realityspy.py``` you can change the port to which you'll report to the proxy
-- In ```app.ts``` you can change the gamespy's port and the port that will receive updates from the server
+- In ```app.ts``` you can change:
+  - The gamespy's port
+  - The port that will receive updates from the server
+  - The public IP, ie the IP that clients connect to, (This is optional but recomended, the code will attempt to obtain this ip)
 
 
