@@ -79,7 +79,7 @@ export class ProxyServer {
 
     private onMessage(request, remote) {
 
-        console.log(request[0] + " " + request[1] + " " + request[2] + ": " + request.compareTo(ProxyServer.QUERY_REQUEST, 0, 3));
+        // console.log(request[0] + " " + request[1] + " " + request[2] + ": " + request.compareTo(ProxyServer.QUERY_REQUEST, 0, 3));
 
         if (request.compareTo(ProxyServer.QUERY_REQUEST, 0, 3)) {
             // Get client challenge 
