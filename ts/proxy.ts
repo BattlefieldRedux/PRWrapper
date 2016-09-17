@@ -1,9 +1,10 @@
 import {createSocket, Socket} from "dgram"
-import {Encoder} from "./Encoder"
-import {Decoder} from "./Decoder"
-import {Server, Message, Flags, Player} from "./Model"
+import {Encoder} from "./encoder"
+import {Decoder} from "./decoder"
+import {Server, Message, Flags, Player} from "./model"
+import {Log} from "./log"
+import "./utils"
 import ip = require("ip");
-import "./Utils"
 
 export class ProxyServer {
     static CHALLENGE_REQUEST = Buffer.from([0xfe, 0xfd, 0x09]);
